@@ -1,25 +1,33 @@
 package net.sf.sockettest.swing;
 
-import java.awt.*;
-import java.awt.event.*;
+import net.sf.sockettest.MyTrustManager;
+import net.sf.sockettest.NetService;
+import net.sf.sockettest.SocketClient;
+import net.sf.sockettest.Util;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
 import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.border.*;
-
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EtchedBorder;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.io.File;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.net.Socket;
 import java.security.SecureRandom;
-
-import java.net.*;
-import java.io.*;
-
-import javax.net.*;
-import javax.net.ssl.*;
-
-import net.sf.sockettest.*;
 
 /**
  * @author Akshathkumar Shetty
  */
-public class SocketTestClient extends JPanel implements NetService{
+public class SocketTestClient extends JPanel implements NetService {
 
     private final String NEW_LINE = "\r\n";
     private ClassLoader cl = getClass().getClassLoader();
@@ -433,13 +441,23 @@ public class SocketTestClient extends JPanel implements NetService{
     public void sendMessage(String s) {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
-            if (out == null) {
-                out = new PrintWriter(new BufferedWriter(
-                        new OutputStreamWriter(socket.getOutputStream())), true);
-            }
+
             append("S: " + s);
-            out.print(s + NEW_LINE);
-            out.flush();
+//            out.print(s + NEW_LINE);
+
+            OutputStream socketOut = socket.getOutputStream();
+
+            byte[] strBytes = s.getBytes();
+            byte[] bytes = new byte[strBytes.length + 2];
+
+            bytes[0] = 2;
+
+            for (int i = 0; i < strBytes.length; i++) {
+                bytes[i + 1] = strBytes[i];
+            }
+            bytes[bytes.length - 1] = 3;
+            socketOut.write(bytes);
+            socketOut.flush();
             sendField.setText("");
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         } catch (Exception e) {
